@@ -1,9 +1,13 @@
 package main
 
 import (
+	"embed"
+	"html/template"
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/deepch/vdk/av"
@@ -13,10 +17,22 @@ import (
 	"golang.org/x/net/websocket"
 )
 
+//go:embed web/templates/*
+var templatesFS embed.FS
+
+//go:embed web/static/*
+var staticFS embed.FS
+
+const staticPrefix = "/static/"
+const staticCacheMaxAge = 30 * 24 * 60 * 60
+
 func serveHTTP() {
 	router := gin.Default()
-	gin.SetMode(gin.DebugMode)
-	router.LoadHTMLGlob("web/templates/*")
+	gin.SetMode(gin.ReleaseMode)
+
+	embedTemplate := template.Must(template.New("").ParseFS(templatesFS, "web/templates/*.tmpl"))
+	router.SetHTMLTemplate(embedTemplate)
+
 	router.GET("/", func(c *gin.Context) {
 		fi, all := Config.list()
 		sort.Strings(all)
@@ -41,12 +57,24 @@ func serveHTTP() {
 		handler := websocket.Handler(ws)
 		handler.ServeHTTP(c.Writer, c.Request)
 	})
-	router.StaticFS("/static", http.Dir("web/static"))
+	router.GET(staticPrefix+"*filepath", StaticsHandler)
+
 	err := router.Run(Config.Server.HTTPBind)
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
+
+func StaticsHandler(c *gin.Context) {
+	path := c.Request.URL.Path
+	c.Header("Cache-Control", "public, max-age="+strconv.Itoa(staticCacheMaxAge))
+	if strings.HasPrefix(path, staticPrefix) {
+		c.FileFromFS("web/"+path, http.FS(staticFS))
+	} else {
+		c.AbortWithStatus(http.StatusNotFound)
+	}
+}
+
 func ws(ws *websocket.Conn) {
 	defer ws.Close()
 	suuid := ws.Request().FormValue("suuid")
