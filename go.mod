@@ -1,6 +1,6 @@
 module github.com/deepch/RTSPtoWSMP4f
 
-go 1.15
+go 1.16
 
 require (
 	github.com/deepch/vdk v0.0.0-20210508200759-5adbbcc01f89
