@@ -34,10 +34,11 @@ if you need RTSPtoWebRTC use https://github.com/deepch/RTSPtoWebRTC
 
 format:
 
-```bash
+```json
 {
   "server": {
-    "http_port": ":8083"
+    "bind": ":8083",
+    "host": "192.168.1.1:8083"
   },
   "streams": {
    "H264_AAC": {

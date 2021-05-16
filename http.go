@@ -21,7 +21,7 @@ func serveHTTP() {
 		fi, all := Config.list()
 		sort.Strings(all)
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"port":     Config.Server.HTTPPort,
+			"host":     Config.Server.HTTPHost,
 			"suuid":    fi,
 			"suuidMap": all,
 			"version":  time.Now().String(),
@@ -31,7 +31,7 @@ func serveHTTP() {
 		_, all := Config.list()
 		sort.Strings(all)
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"port":     Config.Server.HTTPPort,
+			"host":     Config.Server.HTTPHost,
 			"suuid":    c.Param("suuid"),
 			"suuidMap": all,
 			"version":  time.Now().String(),
@@ -42,7 +42,7 @@ func serveHTTP() {
 		handler.ServeHTTP(c.Writer, c.Request)
 	})
 	router.StaticFS("/static", http.Dir("web/static"))
-	err := router.Run(Config.Server.HTTPPort)
+	err := router.Run(Config.Server.HTTPBind)
 	if err != nil {
 		log.Fatalln(err)
 	}
